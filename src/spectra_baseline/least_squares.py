@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 import scipy.sparse as sparse
+from scipy.sparse.linalg import splu
 
 __all__ = [
     "als",
@@ -16,7 +17,7 @@ def _als(spec, DDT, lam, p, ratio, maxiter, w):
     W = sparse.diags(w, 0, shape=(L, L), format="csc")
     for _ in range(maxiter):
         Z = W + DDT
-        LU = sparse.linalg.splu(Z)
+        LU = splu(Z)
         z = LU.solve(w * spec)
         w_last = w
         w = p * (spec > z) + (1 - p) * (spec < z)
@@ -46,6 +47,7 @@ def als(spectra, lam=1e5, p=0.01, ratio: float = 0.1, maxiter: int = 20, w_init:
     w_init : array-like (wns,)
         The initial w values to use. If None and *spectra* is multidimensional
         then w0 will be bootstrapped from the initial values.
+        TODO: allow passing an array of w_init
 
     Notes
     -----
@@ -59,8 +61,15 @@ def als(spectra, lam=1e5, p=0.01, ratio: float = 0.1, maxiter: int = 20, w_init:
     L = spectra.shape[1]
     D = sparse.diags([1, -2, 1], offsets=[-1, 0, 1], shape=(L, L), format="csc")
     DDT = lam * D.dot(D.transpose())
+    update_w_init = False
+    if w_init is None:
+        update_w_init = True
+        w_init = np.ones(L)
+
     for i, spec in enumerate(spectra):
-        Z[i], w_init = _als(spec, DDT, lam, p, ratio, maxiter, w_init)
+        Z[i], w = _als(spec, DDT, lam, p, ratio, maxiter, w_init)
+        if update_w_init:
+            w_init = w
     # squeeze to return to original shape in case of only one spectra
     return (spectra-Z).squeeze()
 
