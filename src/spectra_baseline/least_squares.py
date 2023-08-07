@@ -11,7 +11,15 @@ __all__ = [
     "als",
 ]
 
-def _als(spec, DDT, lam, p, ratio, maxiter, w):
+
+def _als(
+    spec: np.ndarray,
+    DDT: sparse.csc_matrix,
+    p: float,
+    ratio: float,
+    maxiter: int,
+    w: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
     L = spec.shape[0]
     # must be csc format for the SuperLU library used by scipy.linalg.splu
     W = sparse.diags(w, 0, shape=(L, L), format="csc")
@@ -28,7 +36,15 @@ def _als(spec, DDT, lam, p, ratio, maxiter, w):
             return z, w
     return z, w
 
-def als(spectra, lam=1e5, p=0.01, ratio: float = 0.1, maxiter: int = 20, w_init: np.ndarray = None):
+
+def als(
+    spectra: np.ndarray,
+    lam: float = 1e5,
+    p: float = 0.01,
+    ratio: float = 0.1,
+    maxiter: int = 20,
+    w_init: np.ndarray = None,
+) -> np.ndarray:
     """
     Run the als baselining algorithim on a single spectra.
 
@@ -55,7 +71,6 @@ def als(spectra, lam=1e5, p=0.01, ratio: float = 0.1, maxiter: int = 20, w_init:
     """
     spectra = np.atleast_2d(spectra)
 
-
     Z = np.zeros_like(spectra)
     # pre-compute DDT as it doesn't change when doing multiple specta
     L = spectra.shape[1]
@@ -67,9 +82,8 @@ def als(spectra, lam=1e5, p=0.01, ratio: float = 0.1, maxiter: int = 20, w_init:
         w_init = np.ones(L)
 
     for i, spec in enumerate(spectra):
-        Z[i], w = _als(spec, DDT, lam, p, ratio, maxiter, w_init)
+        Z[i], w = _als(spec, DDT, p, ratio, maxiter, w_init)
         if update_w_init:
             w_init = w
     # squeeze to return to original shape in case of only one spectra
-    return (spectra-Z).squeeze()
-
+    return (spectra - Z).squeeze()
