@@ -65,6 +65,11 @@ def als(
         then w0 will be bootstrapped from the initial values.
         TODO: allow passing an array of w_init
 
+    Returns
+    -------
+    Z : np.ndarray ([N], wns)
+        The calculated baselins
+
     Notes
     -----
     Code is an optimized version of: https://stackoverflow.com/a/29185844/835607
@@ -86,4 +91,4 @@ def als(
         if update_w_init:
             w_init = w
     # squeeze to return to original shape in case of only one spectra
-    return (spectra - Z).squeeze()
+    return Z.squeeze()
